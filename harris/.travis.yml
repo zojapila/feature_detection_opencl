@@ -1,0 +1,19 @@
+language: cpp
+
+os:
+  - osx
+
+osx_image: xcode10.1
+
+compiler:
+  - clang
+
+addons:
+  homebrew:
+    packages:
+    - opencv
+
+script:
+  - cmake .
+  - cmake --build .
+  - ./unitTests --gtest_filter=AlgorithmTest.Cpp

@@ -1,0 +1,3 @@
+/home/zosia/aaw/projekt/harris/CMakeFiles/harris.dir
+/home/zosia/aaw/projekt/harris/CMakeFiles/edit_cache.dir
+/home/zosia/aaw/projekt/harris/CMakeFiles/rebuild_cache.dir

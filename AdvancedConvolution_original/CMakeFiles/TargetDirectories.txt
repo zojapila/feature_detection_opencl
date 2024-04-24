@@ -1,0 +1,3 @@
+/home/zosia/aaw/projekt/AdvancedConvolution_original/CMakeFiles/AdvancedConvolution.dir
+/home/zosia/aaw/projekt/AdvancedConvolution_original/CMakeFiles/edit_cache.dir
+/home/zosia/aaw/projekt/AdvancedConvolution_original/CMakeFiles/rebuild_cache.dir

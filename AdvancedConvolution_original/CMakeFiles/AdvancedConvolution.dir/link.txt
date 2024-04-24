@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -rdynamic   -m64    CMakeFiles/AdvancedConvolution.dir/AdvancedConvolution.cpp.o -o bin/x86_64/Release/AdvancedConvolution  -lOpenCL -lrt 
