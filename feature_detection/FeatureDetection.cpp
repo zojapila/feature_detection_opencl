@@ -320,8 +320,16 @@ FeatureDetection::setupCL()
     kernel = cl::Kernel(program, "feature_detection",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
 
+     kernel2 = cl::Kernel(program, "feature_detection2",  &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
+
+
     // Check group size against group size returned by kernel
     kernelWorkGroupSize = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
+                          (devices[sampleArgs->deviceId], &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
+
+    kernelWorkGroupSize2 = kernel2.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
                           (devices[sampleArgs->deviceId], &err);
     CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
 
@@ -343,6 +351,26 @@ FeatureDetection::setupCL()
             blockSizeY = 1;
         }
     }
+
+    if((blockSizeX * blockSizeY) > kernelWorkGroupSize2)
+        {
+            if(!sampleArgs->quiet)
+            {
+                std::cout << "Out of Resources!" << std::endl;
+                std::cout << "Group Size specified : "
+                        << blockSizeX * blockSizeY << std::endl;
+                std::cout << "Max Group Size supported on the kernel : "
+                        << kernelWorkGroupSize2 << std::endl;
+                std::cout << "Falling back to " << kernelWorkGroupSize2 << std::endl;
+            }
+
+            if(blockSizeX > kernelWorkGroupSize2)
+            {
+                blockSizeX = kernelWorkGroupSize2;
+                blockSizeY = 1;
+            }
+        }
+    
 
     return SDK_SUCCESS;
 }
@@ -399,34 +427,113 @@ FeatureDetection::runCLKernels()
     status = kernel.setArg(1, outputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
+    status = kernel2.setArg(0, inputImage2D);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+
+    // outBuffer imager
+    status = kernel2.setArg(1, outputImage2D);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
+
     /*
     * Enqueue a kernel run call.
     */
+   bool run = true;
     cl::NDRange globalThreads(width, height);
     cl::NDRange localThreads(blockSizeX, blockSizeY);
 
-    cl::Event ndrEvt;
-    status = commandQueue.enqueueNDRangeKernel(
-                 kernel,
-                 cl::NullRange,
-                 globalThreads,
-                 localThreads,
-                 0,
-                 &ndrEvt);
-    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
-    status = commandQueue.flush();
-    CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+    while(run){
+        cl::Event ndrEvt1;
+        status = commandQueue.enqueueNDRangeKernel(
+                    kernel,
+                    cl::NullRange,
+                    globalThreads,
+                    localThreads,
+                    0,
+                    &ndrEvt1);
+        CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
-    eventStatus = CL_QUEUED;
-    while(eventStatus != CL_COMPLETE)
-    {
-        status = ndrEvt.getInfo<cl_int>(
-                     CL_EVENT_COMMAND_EXECUTION_STATUS,
-                     &eventStatus);
-        CHECK_OPENCL_ERROR(status,
-                           "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
+        status = commandQueue.flush();
+        CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+        std::vector<cl::Event> wait1{ndrEvt1};
+        status = commandQueue.enqueueBarrierWithWaitList(const_cast<std::vector<cl::Event>*>(&wait1));
+        CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueBarrierWithWaitList failed.");
+        
+        cl::Event ndrEvt2;
+        status = commandQueue.enqueueNDRangeKernel(
+                    kernel2,
+                    cl::NullRange,
+                    globalThreads,
+                    localThreads,
+                    0,
+                    &ndrEvt2);
+        CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+
+        status = commandQueue.flush();
+        CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+        std::vector<cl::Event> wait2{ndrEvt2};
+        status = commandQueue.enqueueBarrierWithWaitList(const_cast<std::vector<cl::Event>*>(&wait2));
+        CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueBarrierWithWaitList failed.");
+
+        // cl::Event ndrEvt3;
+        // status = commandQueue.enqueueNDRangeKernel(
+        //             kernel3,
+        //             cl::NullRange,
+        //             globalThreads,
+        //             localThreads,
+        //             0,
+        //             &ndrEvt3);
+        // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+
+        // status = commandQueue.flush();
+        // CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+        // std::vector<cl::Event> wait3{ndrEvt3};
+        // status = commandQueue.enqueueBarrierWithWaitList(const_cast<std::vector<cl::Event>*>(&wait3));
+        // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueBarrierWithWaitList failed.");
+        // eventStatus = CL_QUEUED;
+        // while(eventStatus != CL_COMPLETE)
+        // {
+        //     status = ndrEvt3.getInfo<cl_int>(
+        //                 CL_EVENT_COMMAND_EXECUTION_STATUS,
+        //                 &eventStatus);
+        //     CHECK_OPENCL_ERROR(status,
+        //                     "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
+        // }
+        // cl::Event ndrEvt4;
+        // cl_int result;
+        int* temp = (int*) malloc(sizeof(int));
+        // status = commandQueue.enqueueReadBuffer(flag_buf, CL_FALSE, 0, sizeof(cl_int), temp, NULL, &ndrEvt4);
+        // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueReadBuffer failed.");
+        // while(eventStatus != CL_COMPLETE)
+        // {
+        //     status = ndrEvt4.getInfo<cl_int>(
+        //                 CL_EVENT_COMMAND_EXECUTION_STATUS,
+        //                 &eventStatus);
+        //     CHECK_OPENCL_ERROR(status,
+        //                     "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
+        // }
+        
+        run = (bool)(*temp);
+        *temp = 0;
+    
+        // while(eventStatus != CL_COMPLETE)
+        // {
+        //     //zmienic numer
+        //     status = ndrEvt2.getInfo<cl_int>(
+        //                 CL_EVENT_COMMAND_EXECUTION_STATUS,
+        //                 &eventStatus);
+        //     CHECK_OPENCL_ERROR(status,
+        //                     "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
+        // }
+        FREE(temp);
     }
+
+
+
+
 
     // Enqueue Read Image
     origin[0] = 0;
@@ -498,6 +605,7 @@ FeatureDetection::setup()
 {
     // Allocate host memory and read input image
     std::string filePath = getPath() + std::string(INPUT_IMAGE);
+    std::cout << filePath << std::endl;
     if(readInputImage(filePath) != SDK_SUCCESS)
     {
         return SDK_FAILURE;

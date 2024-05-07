@@ -1,0 +1,3 @@
+/home/zosia/aaw/feature_detection_opencl/feature_detection/CMakeFiles/FeatureDetection.dir
+/home/zosia/aaw/feature_detection_opencl/feature_detection/CMakeFiles/edit_cache.dir
+/home/zosia/aaw/feature_detection_opencl/feature_detection/CMakeFiles/rebuild_cache.dir

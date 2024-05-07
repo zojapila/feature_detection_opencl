@@ -18,7 +18,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define FEATURE_DETECTION_H
 
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#include <CL/cl.hpp>
+#include "cl.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -56,7 +56,7 @@ class FeatureDetection
         cl::CommandQueue commandQueue;                  /**< CL command queue */
         cl::Program program;                            /**< CL program  */
         cl::Kernel kernel;                              /**< CL kernel */
-
+        cl::Kernel kernel2;                              
         cl_uchar* verificationOutput;       /**< Output array for reference implementation */
 
         SDKBitMap inputBitmap;   /**< Bitmap class object */
@@ -66,6 +66,7 @@ class FeatureDetection
         cl_uint height;                     /**< Height of image */
         cl_bool byteRWSupport;
         size_t kernelWorkGroupSize;         /**< Group Size returned by kernel */
+        size_t kernelWorkGroupSize2;         /**< Group Size returned by kernel */
         size_t blockSizeX;                  /**< Work-group size in x-direction */
         size_t blockSizeY;                  /**< Work-group size in y-direction */
         int iterations;                     /**< Number of iterations for kernel execution */
