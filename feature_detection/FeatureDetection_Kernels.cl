@@ -45,7 +45,7 @@ __kernel void feature_detection2 (
     __read_only image2d_t src,
     __write_only image2d_t dest) {
         const int2 pos = {get_global_id(0), get_global_id(1)};
-        // const float4 in = read_imagef(src, clamp_sampler, pos);
+        const float4 in = read_imagef(src, clamp_sampler, pos);
         float4 s = (float4)(0.0f);
         int half_structure = 2;
         for (int y = -half_structure; y <= half_structure; ++y) 

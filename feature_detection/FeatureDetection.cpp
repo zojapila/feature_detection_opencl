@@ -226,7 +226,7 @@ FeatureDetection::setupCL()
 
     // Create memory objects for output Image
     outputImage2D = cl::Image2D(context,
-                                CL_MEM_WRITE_ONLY,
+                                CL_MEM_READ_WRITE,
                                 cl::ImageFormat(CL_RGBA, CL_UNSIGNED_INT8),
                                 width,
                                 height,
@@ -234,6 +234,16 @@ FeatureDetection::setupCL()
                                 0,
                                 &err);
     CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
+
+    finalOutputImage2D = cl::Image2D(context,
+                                CL_MEM_WRITE_ONLY,
+                                cl::ImageFormat(CL_RGBA, CL_UNSIGNED_INT8),
+                                width,
+                                height,
+                                0,
+                                0,
+                                &err);
+    CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (finalOutputImage2D)");
 
     device.push_back(devices[sampleArgs->deviceId]);
 
@@ -614,6 +624,8 @@ int FeatureDetection::runCLKernels() {
     status = kernel.setArg(0, inputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
+    cl::Buffer resultBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * width * height);
+
     status = kernel.setArg(1, outputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
@@ -635,12 +647,16 @@ int FeatureDetection::runCLKernels() {
 
     // Czekaj na zakończenie operacji kernela1
     commandQueue.finish();
+     if(writeOutputImage(OUTPUT_IMAGE) != SDK_SUCCESS)
+    {
+        return SDK_FAILURE;
+    }
 
     // Set appropriate arguments to the kernel2
-    status = kernel2.setArg(0, inputImage2D);
+    status = kernel2.setArg(0, outputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
-    status = kernel2.setArg(1, outputImage2D);
+    status = kernel2.setArg(1, finalOutputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
     // Uruchomienie wszystkich instancji kernela2
@@ -662,7 +678,7 @@ int FeatureDetection::runCLKernels() {
     // Enqueue Read Image
     cl::Event readEvt;
     status = commandQueue.enqueueReadImage(
-                 outputImage2D,
+                 finalOutputImage2D,
                  CL_FALSE,
                  origin,
                  region,
@@ -781,7 +797,7 @@ FeatureDetection::run()
     kernelTime = (double)(sampleTimer->readTimer(timer)) / iterations;
 
     // write the output image to bitmap file
-    if(writeOutputImage(OUTPUT_IMAGE) != SDK_SUCCESS)
+    if(writeOutputImage(FINAL_OUTPUT_IMAGE) != SDK_SUCCESS)
     {
         return SDK_FAILURE;
     }

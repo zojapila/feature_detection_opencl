@@ -43,9 +43,9 @@ __kernel void feature_detection (
 
 __kernel void feature_detection2 (
     __read_only image2d_t src,
-    __read_write image2d_t dest) {
+    __write_only image2d_t dest) {
         const int2 pos = {get_global_id(0), get_global_id(1)};
-        // const float4 in = read_imagef(src, clamp_sampler, pos);
+        const float4 in = read_imagef(src, clamp_sampler, pos);
         float4 s = (float4)(0.0f);
         int half_structure = 2;
         for (int y = -half_structure; y <= half_structure; ++y) 
@@ -53,8 +53,8 @@ __kernel void feature_detection2 (
             for (int x = -half_structure; x <= half_structure; ++x) 
             {
             const int2 window_pos = pos + (int2)(x,y);
-            float4 sumx = read_imagef(dest, reflect_sampler, window_pos - (int2)(1,0)) - read_imagef(dest, reflect_sampler, window_pos + (int2)(1,0));
-            float4 sumy = read_imagef(dest, reflect_sampler, window_pos - (int2)(0,1)) - read_imagef(dest, reflect_sampler, window_pos + (int2)(0,1));
+            float4 sumx = read_imagef(src, reflect_sampler, window_pos - (int2)(1,0)) - read_imagef(src, reflect_sampler, window_pos + (int2)(1,0));
+            float4 sumy = read_imagef(src, reflect_sampler, window_pos - (int2)(0,1)) - read_imagef(src, reflect_sampler, window_pos + (int2)(0,1));
             s.x += sumx.x *sumx.x;
             s.y += sumy.x *sumy.x;
             s.z += sumx.x *sumy.x;
@@ -64,5 +64,5 @@ __kernel void feature_detection2 (
         float4 r;
         r.x = (s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y);
 
-        write_imagef(dest, pos, read_imagef(src, reflect_sampler, pos));
+        write_imagef(dest, pos, r);
     }

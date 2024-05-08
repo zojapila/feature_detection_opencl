@@ -30,6 +30,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #define INPUT_IMAGE "FeatureDetection_Input.bmp"
 #define OUTPUT_IMAGE "FeatureDetection_Output.bmp"
+#define FINAL_OUTPUT_IMAGE "FeatureDetection_FinOutput.bmp"
 
 #define GROUP_SIZE 256
 
@@ -51,8 +52,9 @@ class FeatureDetection
         std::vector<cl::Device> devices;                /**< CL device list */
         std::vector<cl::Device> device;                 /**< CL device to be used */
         std::vector<cl::Platform> platforms;            /**< list of platforms */
-        cl::Image2D inputImage2D;                       /**< CL Input image2d */
-        cl::Image2D outputImage2D;                      /**< CL Output image2d */
+        cl::Image2D inputImage2D;    
+        cl::Image2D outputImage2D;                      /**< CL Input image2d */
+        cl::Image2D finalOutputImage2D;                      /**< CL Output image2d */
         cl::CommandQueue commandQueue;                  /**< CL command queue */
         cl::Program program;                            /**< CL program  */
         cl::Kernel kernel;                              /**< CL kernel */
