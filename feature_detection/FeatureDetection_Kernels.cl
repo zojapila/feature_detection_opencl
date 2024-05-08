@@ -61,7 +61,7 @@ __kernel void feature_detection2 (
             }
         }
         float harris_k = 0.05;
-        const float4 r;
+        float4 r;
         r.x = (s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y);
 
         write_imagef(dest, pos, r);
