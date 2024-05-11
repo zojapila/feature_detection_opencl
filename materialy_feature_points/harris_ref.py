@@ -7,7 +7,7 @@ import scipy.ndimage.filters as filters
 # wczytanie obrazów
 # I  = cv2.imread("I.jpg")
 # J  = cv2.imread("J.jpg")
-f1_original  = cv2.imread("BG_0005.tif")
+f1_original  = cv2.imread("materialy_feature_points/BG_0005.tif")
 # f2_original  = cv2.imread("fontanna2.jpg")
 f1 = cv2.cvtColor(f1_original, cv2.COLOR_BGR2GRAY)
 # f2 = cv2.cvtColor(f2_original, cv2.COLOR_BGR2GRAY)
@@ -16,7 +16,6 @@ f1 = cv2.cvtColor(f1_original, cv2.COLOR_BGR2GRAY)
 # cv2.imshow("F2", f2)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
-
 
 def harris(I_GR, size_sobel, size_gauss):
     sobelx = cv2.Sobel(I_GR, cv2.CV_32F, 1, 0, ksize=size_sobel)
@@ -48,6 +47,8 @@ def plot_im(max1, image1):
     for point in arr_points:
         cv2.drawMarker(image1, (point[1], point[0]), (0,0,255), markerType=cv2.MARKER_CROSS, 
         markerSize=40, thickness=2, line_type=cv2.LINE_AA)
+        # image1[point[0], point[1]] = (0,0,255)
+    
 
     cv2.imshow("feature points", image1)
     cv2.waitKey()
@@ -61,10 +62,10 @@ def plot_im(max1, image1):
     # plt.title('Obraz 1')
 
 # 1
-h1 = harris(f1, 7, 7)
-max1 = find_max(h1, 7, 0.55)
-new_img = plot_im(max1, f1_original)
-cv2.imwrite("harris7_7.tif", new_img)
+# h1 = harris(f1, 7, 7)
+# max1 = find_max(h1, 7, 0.55)
+# new_img = plot_im(max1, f1_original)
+# cv2.imwrite("harris7_7.tif", new_img)
 
 # 2
 # h1 = harris(f1, 7, 7)
@@ -73,7 +74,7 @@ cv2.imwrite("harris7_7.tif", new_img)
 # cv2.imwrite("harris7_7_2.tif", new_img)
 
 # 3
-# h1 = harris(f1, 13,13)
-# max1 = find_max(h1, 13, 0.82)
-# new_img = plot_im(max1, f1_original)
-# cv2.imwrite("harris7_7_3.tif", new_img)
+h1 = harris(f1, 13,13)
+max1 = find_max(h1, 13, 0.82)
+new_img = plot_im(max1, f1_original)
+cv2.imwrite("harris7_7_3.tif", new_img)
