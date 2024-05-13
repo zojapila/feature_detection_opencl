@@ -631,16 +631,32 @@ int FeatureDetection::runCLKernels() {
 
     // Uruchomienie wszystkich instancji kernela1
     cl::NDRange globalThreads(width, height);
-    cl::NDRange localThreads(blockSizeX, blockSizeY);
+    // cl::NDRange localThreads(blockSizeX, blockSizeY);
 
-    status = commandQueue.enqueueNDRangeKernel(
-                kernel,
-                cl::NullRange,
-                globalThreads,
-                localThreads,
-                NULL,
-                NULL);
-    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+    // status = commandQueue.enqueueNDRangeKernel(
+    //             kernel,
+    //             cl::NullRange,
+    //             globalThreads,
+    //             localThreads,
+    //             0,
+    //             NULL);
+    // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+    cl::Device device = commandQueue.getInfo<CL_QUEUE_DEVICE>();
+    size_t maxLocalSize = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+
+// Dostosowanie lokalnego rozmiaru grupy roboczej, aby nie przekraczać maksymalnego rozmiaru
+// cl::NDRange localThreads(std::min(maxLocalSize, static_cast<size_t>(blockSizeX)), 
+//                          std::min(maxLocalSize, static_cast<size_t>(blockSizeY)));
+cl::NDRange localThreads(1, 1);
+// Uruchomienie wszystkich instancji kernela1
+status = commandQueue.enqueueNDRangeKernel(
+            kernel,
+            cl::NullRange,
+            globalThreads,
+            localThreads,
+            0,
+            NULL);
+CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
     status = commandQueue.flush();
     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");

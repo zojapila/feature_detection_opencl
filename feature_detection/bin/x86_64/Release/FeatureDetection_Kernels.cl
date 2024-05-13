@@ -44,25 +44,59 @@ __kernel void feature_detection (
 __kernel void feature_detection2 (
     __read_only image2d_t src,
     __write_only image2d_t dest) {
-        const int2 pos = {get_global_id(0), get_global_id(1)};
-        const float4 in = read_imagef(src, clamp_sampler, pos);
+        int2 coord = (int2)(get_global_id(0), get_global_id(1));
+        const float4 in = read_imagef(src, clamp_sampler, coord);
+        uint width = get_global_size(0);
+	    uint height = get_global_size(1);
         float4 s = (float4)(0.0f);
-        int half_structure = 2;
-        for (int y = -half_structure; y <= half_structure; ++y) 
-        {
-            for (int x = -half_structure; x <= half_structure; ++x) 
-            {
-            const int2 window_pos = pos + (int2)(x,y);
-            float4 sumx = read_imagef(src, reflect_sampler, window_pos - (int2)(1,0)) - read_imagef(src, reflect_sampler, window_pos + (int2)(1,0));
-            float4 sumy = read_imagef(src, reflect_sampler, window_pos - (int2)(0,1)) - read_imagef(src, reflect_sampler, window_pos + (int2)(0,1));
-            s.x += sumx.x *sumx.x;
-            s.y += sumy.x *sumy.x;
-            s.z += sumx.x *sumy.x;
-            }
-        }
-        float harris_k = 0.05;
-        float4 r;
-        r.x = (s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y);
 
-        write_imagef(dest, pos, r);
+	    float4 Gx = (float4)(0);
+	    float4 Gy = Gx;
+        //sobel reference app
+        float4 i00 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x - 1, coord.y + 1)));
+		float4 i10 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x - 0, coord.y + 1)));
+		float4 i20 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x + 1, coord.y + 1)));
+		float4 i01 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x - 1, coord.y + 0)));
+		float4 i11 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x - 0, coord.y + 0)));
+		float4 i21 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x + 1, coord.y + 0)));
+		float4 i02 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x - 1, coord.y - 1)));
+		float4 i12 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x - 0, coord.y - 1)));
+		float4 i22 = convert_float4(read_imageui(src, reflect_sampler, (int2)(coord.x + 1, coord.y - 1)));
+
+		Gx =   i00 + (float4)(2) * i10 + i20 - i02  - (float4)(2) * i12 - i22;
+
+		Gy =   i00 - i20  + (float4)(2)*i01 - (float4)(2)*i21 + i02  -  i22;
+
+		Gx = native_divide(native_sqrt(Gx * Gx + Gy * Gy), (float4)(2));
+
+            s.x = Gx.x *Gx.x ;
+            s.y = Gy.x *Gy.x ;
+            s.z = Gx.x *Gy.x;
+
+        float harris_k = 0.05;
+        float4 r = (float4)(0);
+        r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y));
+        r.y = r.x;
+        r.z = r.x;
+        // r = fast_normalize(r);
+
+        write_imagef(dest, coord, r);
+        // }
     }
+
+__kernel void feature_detection3 (
+    __read_only image2d_t src,
+    __global float* row_max_values) {
+
+    const int row = get_global_id(0);
+    const int width = get_image_width(src);
+    float row_max = 0.0f;
+
+    for (int x = 0; x < width; ++x) {
+        const int2 pos = {x, row};
+        const float4 s = read_imagef(src, reflect_sampler, pos);
+        row_max = max(s.x, row_max);
+    }
+
+    row_max_values[row] = row_max;
+}
