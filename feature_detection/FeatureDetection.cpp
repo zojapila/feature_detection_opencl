@@ -227,7 +227,7 @@ FeatureDetection::setupCL()
     // Create memory objects for output Image
     outputImage2D = cl::Image2D(context,
                                 CL_MEM_READ_WRITE,
-                                cl::ImageFormat(CL_RGBA, CL_UNSIGNED_INT8),
+                                cl::ImageFormat(CL_RGBA, CL_FLOAT),
                                 width,
                                 height,
                                 0,
@@ -624,7 +624,7 @@ int FeatureDetection::runCLKernels() {
     status = kernel.setArg(0, inputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
-    cl::Buffer resultBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * width * height);
+    cl::Buffer resultBuffer(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
 
     status = kernel.setArg(1, outputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
