@@ -234,6 +234,25 @@ FeatureDetection::setupCL()
                                 0,
                                 &err);
     CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
+    outputImage2D1 = cl::Image2D(context,
+                                CL_MEM_READ_WRITE,
+                                cl::ImageFormat(CL_RGBA, CL_FLOAT),
+                                width,
+                                height,
+                                0,
+                                0,
+                                &err);
+    CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
+    outputImage2D2 = cl::Image2D(context,
+                                CL_MEM_READ_WRITE,
+                                cl::ImageFormat(CL_RGBA, CL_FLOAT),
+                                width,
+                                height,
+                                0,
+                                0,
+                                &err);
+    CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
+    
 
     finalOutputImage2D = cl::Image2D(context,
                                 CL_MEM_WRITE_ONLY,
@@ -330,7 +349,11 @@ FeatureDetection::setupCL()
     kernel = cl::Kernel(program, "feature_detection",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
 
-     kernel2 = cl::Kernel(program, "feature_detection2",  &err);
+    kernel2 = cl::Kernel(program, "feature_detection2",  &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
+    kernel3 = cl::Kernel(program, "feature_detection3",  &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
+    kernel4 = cl::Kernel(program, "feature_detection4",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
 
 
@@ -340,6 +363,12 @@ FeatureDetection::setupCL()
     CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
 
     kernelWorkGroupSize2 = kernel2.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
+                          (devices[sampleArgs->deviceId], &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
+    kernelWorkGroupSize3 = kernel3.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
+                          (devices[sampleArgs->deviceId], &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
+    kernelWorkGroupSize4 = kernel4.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
                           (devices[sampleArgs->deviceId], &err);
     CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
 
@@ -381,14 +410,54 @@ FeatureDetection::setupCL()
             }
         }
     
+    if((blockSizeX * blockSizeY) > kernelWorkGroupSize3)
+        {
+            if(!sampleArgs->quiet)
+            {
+                std::cout << "Out of Resources!" << std::endl;
+                std::cout << "Group Size specified : "
+                        << blockSizeX * blockSizeY << std::endl;
+                std::cout << "Max Group Size supported on the kernel : "
+                        << kernelWorkGroupSize3 << std::endl;
+                std::cout << "Falling back to " << kernelWorkGroupSize3 << std::endl;
+            }
+
+            if(blockSizeX > kernelWorkGroupSize3)
+            {
+                blockSizeX = kernelWorkGroupSize3;
+                blockSizeY = 1;
+            }
+        }
+    
+    if((blockSizeX * blockSizeY) > kernelWorkGroupSize4)
+        {
+            if(!sampleArgs->quiet)
+            {
+                std::cout << "Out of Resources!" << std::endl;
+                std::cout << "Group Size specified : "
+                        << blockSizeX * blockSizeY << std::endl;
+                std::cout << "Max Group Size supported on the kernel : "
+                        << kernelWorkGroupSize4 << std::endl;
+                std::cout << "Falling back to " << kernelWorkGroupSize4 << std::endl;
+            }
+
+            if(blockSizeX > kernelWorkGroupSize4)
+            {
+                blockSizeX = kernelWorkGroupSize4;
+                blockSizeY = 1;
+            }
+        }
+    
 
     return SDK_SUCCESS;
 }
 
-// int FeatureDetection::runCLKernels()
-// {
+// TODO: AAA TU KONIEC
+
+// int FeatureDetection::runCLKernels() {
 //     cl_int status;
 
+//     // Inicjalizacja zmiennych origin i region
 //     cl::size_t<3> origin;
 //     origin[0] = 0;
 //     origin[1] = 0;
@@ -399,6 +468,7 @@ FeatureDetection::setupCL()
 //     region[1] = height;
 //     region[2] = 1;
 
+//     // Enqueue Write Image
 //     cl::Event writeEvt;
 //     status = commandQueue.enqueueWriteImage(
 //                  inputImage2D,
@@ -416,147 +486,85 @@ FeatureDetection::setupCL()
 //     status = commandQueue.flush();
 //     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
 
-//     cl_int eventStatus = CL_QUEUED;
-//     while(eventStatus != CL_COMPLETE)
-//     {
-//         status = writeEvt.getInfo<cl_int>(
-//                      CL_EVENT_COMMAND_EXECUTION_STATUS,
-//                      &eventStatus);
-//         CHECK_OPENCL_ERROR(status,
-//                            "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
+//     // Czekaj na zakończenie operacji zapisu
+//     status = writeEvt.wait();
+//     CHECK_OPENCL_ERROR(status, "Event::wait failed.");
 
-//     }
-
-//     // Set appropriate arguments to the kernel
-//     // input buffer image
+//     // Set appropriate arguments to the kernel1
 //     status = kernel.setArg(0, inputImage2D);
 //     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
-//     // outBuffer imager
+//     cl::Buffer resultBuffer(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
+
 //     status = kernel.setArg(1, outputImage2D);
 //     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
-//     status = kernel2.setArg(0, inputImage2D);
-//     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
-
-//     // outBuffer imager
-//     status = kernel2.setArg(1, outputImage2D);
-//     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
-
-//     /*
-//     * Enqueue a kernel run call.
-//     */
-//    bool run = true;
+//     // Uruchomienie wszystkich instancji kernela1
 //     cl::NDRange globalThreads(width, height);
-//     cl::NDRange localThreads(blockSizeX, blockSizeY);
+//     // cl::NDRange localThreads(blockSizeX, blockSizeY);
 
+//     // status = commandQueue.enqueueNDRangeKernel(
+//     //             kernel,
+//     //             cl::NullRange,
+//     //             globalThreads,
+//     //             localThreads,
+//     //             0,
+//     //             NULL);
+//     // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+//     cl::Device device = commandQueue.getInfo<CL_QUEUE_DEVICE>();
+//     size_t maxLocalSize = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
 
-//     while(run){
-//         cl::Event ndrEvt1;
-//         status = commandQueue.enqueueNDRangeKernel(
-//                     kernel,
-//                     cl::NullRange,
-//                     globalThreads,
-//                     localThreads,
-//                     0,
-//                     &ndrEvt1);
-//         CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+// // Dostosowanie lokalnego rozmiaru grupy roboczej, aby nie przekraczać maksymalnego rozmiaru
+// // cl::NDRange localThreads(std::min(maxLocalSize, static_cast<size_t>(blockSizeX)), 
+// //                          std::min(maxLocalSize, static_cast<size_t>(blockSizeY)));
+// cl::NDRange localThreads(1, 1);
+// // Uruchomienie wszystkich instancji kernela1
+// status = commandQueue.enqueueNDRangeKernel(
+//             kernel,
+//             cl::NullRange,
+//             globalThreads,
+//             localThreads,
+//             0,
+//             NULL);
+// CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
-//         status = commandQueue.flush();
-//         CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+//     status = commandQueue.flush();
+//     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
 
-//         std::vector<cl::Event> wait1{ndrEvt1};
-//         status = commandQueue.enqueueBarrierWithWaitList(const_cast<std::vector<cl::Event>*>(&wait1));
-//         CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueBarrierWithWaitList failed.");
-        
-//         cl::Event ndrEvt2;
-//         status = commandQueue.enqueueNDRangeKernel(
-//                     kernel2,
-//                     cl::NullRange,
-//                     globalThreads,
-//                     localThreads,
-//                     0,
-//                     &ndrEvt2);
-//         CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
-
-//         status = commandQueue.flush();
-//         CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
-
-//         std::vector<cl::Event> wait2{ndrEvt2};
-//         status = commandQueue.enqueueBarrierWithWaitList(const_cast<std::vector<cl::Event>*>(&wait2));
-//         CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueBarrierWithWaitList failed.");
-
-//         // cl::Event ndrEvt3;
-//         // status = commandQueue.enqueueNDRangeKernel(
-//         //             kernel3,
-//         //             cl::NullRange,
-//         //             globalThreads,
-//         //             localThreads,
-//         //             0,
-//         //             &ndrEvt3);
-//         // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
-
-//         // status = commandQueue.flush();
-//         // CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
-
-//         // std::vector<cl::Event> wait3{ndrEvt3};
-//         // status = commandQueue.enqueueBarrierWithWaitList(const_cast<std::vector<cl::Event>*>(&wait3));
-//         // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueBarrierWithWaitList failed.");
-//         // eventStatus = CL_QUEUED;
-//         // while(eventStatus != CL_COMPLETE)
-//         // {
-//         //     status = ndrEvt3.getInfo<cl_int>(
-//         //                 CL_EVENT_COMMAND_EXECUTION_STATUS,
-//         //                 &eventStatus);
-//         //     CHECK_OPENCL_ERROR(status,
-//         //                     "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
-//         // }
-//         // cl::Event ndrEvt4;
-//         // cl_int result;
-//         int* temp = (int*) malloc(sizeof(int));
-//         // status = commandQueue.enqueueReadBuffer(flag_buf, CL_FALSE, 0, sizeof(cl_int), temp, NULL, &ndrEvt4);
-//         // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueReadBuffer failed.");
-//         // while(eventStatus != CL_COMPLETE)
-//         // {
-//         //     status = ndrEvt4.getInfo<cl_int>(
-//         //                 CL_EVENT_COMMAND_EXECUTION_STATUS,
-//         //                 &eventStatus);
-//         //     CHECK_OPENCL_ERROR(status,
-//         //                     "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
-//         // }
-//         *temp = 0;
-//         run = (bool)(*temp);
-        
-    
-//         // while(eventStatus != CL_COMPLETE)
-//         // {
-//         //     //zmienic numer
-//         //     status = ndrEvt2.getInfo<cl_int>(
-//         //                 CL_EVENT_COMMAND_EXECUTION_STATUS,
-//         //                 &eventStatus);
-//         //     CHECK_OPENCL_ERROR(status,
-//         //                     "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
-//         // }
-//         FREE(temp);
+//     // Czekaj na zakończenie operacji kernela1
+//     commandQueue.finish();
+//      if(writeOutputImage(OUTPUT_IMAGE) != SDK_SUCCESS)
+//     {
+//         return SDK_FAILURE;
 //     }
 
+//     // Set appropriate arguments to the kernel2
+//     status = kernel2.setArg(0, outputImage2D);
+//     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
+//     status = kernel2.setArg(1, finalOutputImage2D);
+//     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
+//     // Uruchomienie wszystkich instancji kernela2
+//     status = commandQueue.enqueueNDRangeKernel(
+//                 kernel2,
+//                 cl::NullRange,
+//                 globalThreads,
+//                 localThreads,
+//                 NULL,
+//                 NULL);
+//     CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
+//     status = commandQueue.flush();
+//     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+//     // Czekaj na zakończenie operacji kernela2
+//     commandQueue.finish();
 
 //     // Enqueue Read Image
-//     origin[0] = 0;
-//     origin[1] = 0;
-//     origin[2] = 0;
-
-//     region[0] = width;
-//     region[1] = height;
-//     region[2] = 1;
-
-//     // Enqueue readBuffer
 //     cl::Event readEvt;
 //     status = commandQueue.enqueueReadImage(
-//                  outputImage2D,
+//                  finalOutputImage2D,
 //                  CL_FALSE,
 //                  origin,
 //                  region,
@@ -570,21 +578,13 @@ FeatureDetection::setupCL()
 //     status = commandQueue.flush();
 //     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
 
-//     eventStatus = CL_QUEUED;
-//     while(eventStatus != CL_COMPLETE)
-//     {
-//         status = readEvt.getInfo<cl_int>(
-//                      CL_EVENT_COMMAND_EXECUTION_STATUS,
-//                      &eventStatus);
-//         CHECK_OPENCL_ERROR(status,
-//                            "cl:Event.getInfo(CL_EVENT_COMMAND_EXECUTION_STATUS) failed.");
-
-//     }
+//     // Czekaj na zakończenie operacji odczytu
+//     status = readEvt.wait();
+//     CHECK_OPENCL_ERROR(status, "Event::wait failed.");
 
 //     return SDK_SUCCESS;
 // }
-
-int FeatureDetection::runCLKernels() {
+cl_int FeatureDetection::runCLKernels() {
     cl_int status;
 
     // Inicjalizacja zmiennych origin i region
@@ -610,8 +610,7 @@ int FeatureDetection::runCLKernels() {
                  inputImageData,
                  NULL,
                  &writeEvt);
-    CHECK_OPENCL_ERROR(status,
-                       "CommandQueue::enqueueWriteImage failed. (inputImage2D)");
+    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueWriteImage failed. (inputImage2D)");
 
     status = commandQueue.flush();
     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
@@ -632,38 +631,24 @@ int FeatureDetection::runCLKernels() {
     // Uruchomienie wszystkich instancji kernela1
     cl::NDRange globalThreads(width, height);
     // cl::NDRange localThreads(blockSizeX, blockSizeY);
+    cl::NDRange localThreads(1, 1);
 
-    // status = commandQueue.enqueueNDRangeKernel(
-    //             kernel,
-    //             cl::NullRange,
-    //             globalThreads,
-    //             localThreads,
-    //             0,
-    //             NULL);
-    // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
-    cl::Device device = commandQueue.getInfo<CL_QUEUE_DEVICE>();
-    size_t maxLocalSize = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
-
-// Dostosowanie lokalnego rozmiaru grupy roboczej, aby nie przekraczać maksymalnego rozmiaru
-// cl::NDRange localThreads(std::min(maxLocalSize, static_cast<size_t>(blockSizeX)), 
-//                          std::min(maxLocalSize, static_cast<size_t>(blockSizeY)));
-cl::NDRange localThreads(1, 1);
-// Uruchomienie wszystkich instancji kernela1
-status = commandQueue.enqueueNDRangeKernel(
-            kernel,
-            cl::NullRange,
-            globalThreads,
-            localThreads,
-            0,
-            NULL);
-CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+    status = commandQueue.enqueueNDRangeKernel(
+                kernel,
+                cl::NullRange,
+                globalThreads,
+                localThreads,
+                0,
+                NULL);
+    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
     status = commandQueue.flush();
     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
 
     // Czekaj na zakończenie operacji kernela1
     commandQueue.finish();
-     if(writeOutputImage(OUTPUT_IMAGE) != SDK_SUCCESS)
+
+    if(writeOutputImage(OUTPUT_IMAGE) != SDK_SUCCESS)
     {
         return SDK_FAILURE;
     }
@@ -672,7 +657,9 @@ CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
     status = kernel2.setArg(0, outputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
-    status = kernel2.setArg(1, finalOutputImage2D);
+    cl::Buffer resultBuffer2(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
+
+    status = kernel2.setArg(1, outputImage2D1);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
     // Uruchomienie wszystkich instancji kernela2
@@ -689,6 +676,56 @@ CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
     CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
 
     // Czekaj na zakończenie operacji kernela2
+    commandQueue.finish();
+
+    // Set appropriate arguments to the kernel3
+    status = kernel3.setArg(0, inputImage2D);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+    status = kernel3.setArg(1, outputImage2D1);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+
+    cl::Buffer resultBuffer3(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
+
+    status = kernel3.setArg(2, outputImage2D2);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
+
+    // Uruchomienie wszystkich instancji kernela3
+    status = commandQueue.enqueueNDRangeKernel(
+                kernel3,
+                cl::NullRange,
+                globalThreads,
+                localThreads,
+                NULL,
+                NULL);
+    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+
+    status = commandQueue.flush();
+    CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+    // Czekaj na zakończenie operacji kernela3
+    commandQueue.finish();
+
+    // Set appropriate arguments to the kernel4
+    status = kernel4.setArg(0, outputImage2D2);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+
+    status = kernel4.setArg(1, finalOutputImage2D);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
+
+    // Uruchomienie wszystkich instancji kernela4
+    status = commandQueue.enqueueNDRangeKernel(
+                kernel4,
+                cl::NullRange,
+                globalThreads,
+                localThreads,
+                NULL,
+                NULL);
+    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+
+    status = commandQueue.flush();
+    CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+    // Czekaj na zakończenie operacji kernela4
     commandQueue.finish();
 
     // Enqueue Read Image
@@ -832,141 +869,6 @@ FeatureDetection::cleanup()
 
     return SDK_SUCCESS;
 }
-
-
-// void
-// FeatureDetection::sobelFilterImageCPUReference()
-// {
-//     // x-axis gradient mask
-//     const int kx[][3] =
-//     {
-//         { 1, 2, 1},
-//         { 0, 0, 0},
-//         { -1, -2, -1}
-//     };
-
-//     // y-axis gradient mask
-//     const int ky[][3] =
-//     {
-//         { 1, 0, -1},
-//         { 2, 0, -2},
-//         { 1, 0, -1}
-//     };
-
-//     int gx = 0;
-//     int gy = 0;
-
-//     // pointer to input image data
-//     cl_uchar *ptr = (cl_uchar*)malloc(width * height * pixelSize);
-//     memcpy(ptr, inputImageData, width * height * pixelSize);
-
-//     // each pixel has 4 uchar components
-//     int w = width * 4;
-
-//     int k = 1;
-
-//     // apply filter on each pixel (except boundary pixels)
-//     for(int i = 0; i < (int)(w * (height - 1)) ; i++)
-//     {
-//         if(i < (k + 1) * w - 4 && i >= 4 + k * w)
-//         {
-//             gx =  kx[0][0] **(ptr + i - 4 - w)
-//                   + kx[0][1] **(ptr + i - w)
-//                   + kx[0][2] **(ptr + i + 4 - w)
-//                   + kx[1][0] **(ptr + i - 4)
-//                   + kx[1][1] **(ptr + i)
-//                   + kx[1][2] **(ptr + i + 4)
-//                   + kx[2][0] **(ptr + i - 4 + w)
-//                   + kx[2][1] **(ptr + i + w)
-//                   + kx[2][2] **(ptr + i + 4 + w);
-
-//             gy =  ky[0][0] **(ptr + i - 4 - w)
-//                   + ky[0][1] **(ptr + i - w)
-//                   + ky[0][2] **(ptr + i + 4 - w)
-//                   + ky[1][0] **(ptr + i - 4)
-//                   + ky[1][1] **(ptr + i)
-//                   + ky[1][2] **(ptr + i + 4)
-//                   + ky[2][0] **(ptr + i - 4 + w)
-//                   + ky[2][1] **(ptr + i + w)
-//                   + ky[2][2] **(ptr + i + 4 + w);
-
-//             float gx2 = pow((float)gx, 2);
-//             float gy2 = pow((float)gy, 2);
-
-//             double temp = sqrt(gx2 + gy2) / 2.0;
-
-//             // Saturate
-//             if(temp > 255)
-//             {
-//                 temp = 255;
-//             }
-//             if(temp < 0)
-//             {
-//                 temp = 0;
-//             }
-
-//             *(verificationOutput + i) = (cl_uchar)(temp);
-//         }
-
-//         // if reached at the end of its row then incr k
-//         if(i == (k + 1) * w - 5)
-//         {
-//             k++;
-//         }
-//     }
-//     FREE(ptr);
-// }
-
-
-// int
-// FeatureDetection::verifyResults()
-// {
-//     if(!byteRWSupport)
-//     {
-//         return SDK_SUCCESS;
-//     }
-
-//     if(sampleArgs->verify)
-//     {
-//         // reference implementation
-//         sobelFilterImageCPUReference();
-
-//         size_t size = width * height * sizeof(cl_uchar4);
-
-//         cl_uchar4 *verificationData = (cl_uchar4*)malloc(size);
-//         memcpy(verificationData, verificationOutput, size);
-
-//         cl_uint error = 0;
-//         for(cl_uint y = 0; y < height; y++)
-//         {
-//             for(cl_uint x = 0; x < width; x++)
-//             {
-//                 int c = x + y * width;
-//                 // Only verify pixels inside the boundary
-//                 if((x >= 1 && x < (width - 1) && y >= 1 && y < (height - 1)))
-//                 {
-//                     error += outputImageData[c].s[0]-verificationData[c].s[0];
-//                 }
-//             }
-//         }
-
-//         // compare the results and see if they match
-//         if(!error)
-//         {
-//             std::cout << "Passed!\n" << std::endl;
-//             FREE(verificationData);
-//             return SDK_SUCCESS;
-//         }
-//         else
-//         {
-//             std::cout << "Failed\n" << std::endl;
-//             FREE(verificationData);
-//             return SDK_FAILURE;
-//         }
-//     }
-
-//     return SDK_SUCCESS;
-// }
 
 void
 FeatureDetection::printStats()

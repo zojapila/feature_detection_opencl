@@ -7,7 +7,8 @@ import scipy.ndimage.filters as filters
 # wczytanie obrazów
 # I  = cv2.imread("I.jpg")
 # J  = cv2.imread("J.jpg")
-f1_original  = cv2.imread("materialy_feature_points/BG_0005.tif")
+f1_original  = cv2.imread("materialy_feature_points/FeatureDetection_Input_copy.bmp")
+
 # f2_original  = cv2.imread("fontanna2.jpg")
 f1 = cv2.cvtColor(f1_original, cv2.COLOR_BGR2GRAY)
 # f2 = cv2.cvtColor(f2_original, cv2.COLOR_BGR2GRAY)
@@ -45,6 +46,7 @@ def plot_im(max1, image1):
     pt_y, pt_x = max1
     arr_points = np.concatenate([pt_y[:,None], pt_x[:,None]], axis=1)
     for point in arr_points:
+        print(point)
         cv2.drawMarker(image1, (point[1], point[0]), (0,0,255), markerType=cv2.MARKER_CROSS, 
         markerSize=40, thickness=2, line_type=cv2.LINE_AA)
         # image1[point[0], point[1]] = (0,0,255)
