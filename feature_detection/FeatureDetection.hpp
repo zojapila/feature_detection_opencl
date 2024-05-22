@@ -56,11 +56,13 @@ class FeatureDetection
         cl::Image2D outputImage2D;                      /**< CL Input image2d */
         cl::Image2D outputImage2D1;
         cl::Image2D outputImage2D2;
+        cl::Image2D outputImage2D22;
         cl::Image2D finalOutputImage2D;                      /**< CL Output image2d */
         cl::CommandQueue commandQueue;                  /**< CL command queue */
         cl::Program program;                            /**< CL program  */
         cl::Kernel kernel;                              /**< CL kernel */
-        cl::Kernel kernel2;      
+        cl::Kernel kernel2;  
+        cl::Kernel kernel22;      
         cl::Kernel kernel3;                          
         cl::Kernel kernel4;  
         cl_uchar* verificationOutput;       /**< Output array for reference implementation */
@@ -73,6 +75,7 @@ class FeatureDetection
         cl_bool byteRWSupport;
         size_t kernelWorkGroupSize;         /**< Group Size returned by kernel */
         size_t kernelWorkGroupSize2;         /**< Group Size returned by kernel */
+        size_t kernelWorkGroupSize22;  
         size_t kernelWorkGroupSize3; 
         size_t kernelWorkGroupSize4; 
         size_t blockSizeX;                  /**< Work-group size in x-direction */

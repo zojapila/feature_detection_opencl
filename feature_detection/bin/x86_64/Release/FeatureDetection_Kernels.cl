@@ -41,6 +41,30 @@ __constant sampler_t clamp_sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_C
 __kernel void feature_detection (
     __read_only image2d_t src,
     __write_only image2d_t dest) {
+        int2 coord = (int2)(get_global_id(0), get_global_id(1));
+        const float4 in = convert_float4(read_imageui(src, clamp_sampler, coord));
+        float4 pixel = dot(in, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
+            float minVal = 1.0f; // Initial high value for min operation
+
+    // Iterate over the 5x5 region
+    // for (int i = -2; i <= 2; i++) {
+    //     for (int j = -2; j <= 2; j++) {
+    //         // uint4 pixel = read_imageui(src, clamp_sampler, coord + (int2)(j, i));
+    //         float4 pixel = convert_float4(read_imageui(src, reflect_sampler, coord + (int2)(j, i)));
+    //         pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
+    //         minVal = fmin(minVal, pixel.x); // Update minimum value
+    //     }
+    // }
+    write_imagef(dest, coord, convert_float4(pixel));
+
+    // write_imagef(dest, coord, (float4)(minVal, minVal, minVal, 1.0f));
+}
+        // write_imageui(dest, coord, convert_uint4(in));
+
+
+__kernel void feature_detection2 (
+    __read_only image2d_t src,
+    __write_only image2d_t dest) {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
     float4 s = (float4)(0.0f);
 
@@ -71,8 +95,8 @@ __kernel void feature_detection (
     // Iterate over the 7x7 region
     for (int i = -3; i <= 3; i++) {
         for (int j = -3; j <= 3; j++) {
-            float4 pixel = convert_float4(read_imageui(src, reflect_sampler, coord + (int2)(j, i)));
-            pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0));  // Convert to grayscale
+            float4 pixel = convert_float4(read_imagef(src, reflect_sampler, coord + (int2)(j, i)));
+             // Convert to grayscale
 
             Gx += pixel * sobel_x[i + 3][j + 3];
             Gy += pixel * sobel_y[i + 3][j + 3];
@@ -138,7 +162,7 @@ __kernel void feature_detection (
 // }
 
 
-__kernel void feature_detection2 (
+__kernel void feature_detection22 (
     __read_only image2d_t src,
     __write_only image2d_t dest) {
         int2 coord = (int2)(get_global_id(0), get_global_id(1));
@@ -172,8 +196,12 @@ __kernel void feature_detection2 (
         float harris_k = 0.05;
         float4 r = (float4)(0);
         r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y))/ 7000000000;
-        if (r.x < 209) {
+        printf("%f",r.x);
+        if (r.x < 0) {
             r.x=0;
+        }
+        else {
+            printf("%f \n", r.x);
         }
         r.y = r.x;
         r.z = r.x;
@@ -216,9 +244,9 @@ __kernel void feature_detection3 (
         }
     }
     float4 d = (255, 0, 0, 0);
-    if (max.x > 0) {
-    printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
-    }
+    // if (max.x > 0) {
+    // // printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
+    // }
     write_imagef(dest, pos, d);
 
     // write_imagef(dest, coord, in);
