@@ -44,22 +44,23 @@ __kernel void feature_detection (
         int2 coord = (int2)(get_global_id(0), get_global_id(1));
         const float4 in = convert_float4(read_imageui(src, clamp_sampler, coord));
         float4 pixel = dot(in, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
-            float minVal = 1.0f; // Initial high value for min operation
+        float minVal = pixel.x; // Initial high value for min operation
         if((coord.x == 1000) && (coord.y==1000)) {printf("1");}
         
+        int er_size = 10;
 
     // // Iterate over the 5x5 region
-    // for (int i = -2; i <= 2; i++) {
-    //     for (int j = -2; j <= 2; j++) {
-    //         // uint4 pixel = read_imageui(src, clamp_sampler, coord + (int2)(j, i));
-    //         float4 pixel = convert_float4(read_imageui(src, reflect_sampler, coord + (int2)(j, i)));
-    //         pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
-    //         minVal = fmin(minVal, pixel.x); // Update minimum value
-    //     }
-    // }
-    write_imagef(dest, coord, convert_float4(pixel));
-
-    // write_imagef(dest, coord, (float4)(minVal, minVal, minVal, 1.0f));
+    for (int i = -er_size; i <= er_size; i++) {
+        for (int j = -er_size; j <= er_size; j++) {
+            // uint4 pixel = read_imageui(src, clamp_sampler, coord + (int2)(j, i));
+            float4 pixel = convert_float4(read_imageui(src, clamp_sampler, coord + (int2)(i, j)));
+            pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
+            minVal = fmax(minVal, pixel.x); // Update minimum value
+        }
+    }
+    // write_imagef(dest, coord, convert_float4(pixel));
+    // printf("%f \n", minVal);
+    write_imagef(dest, coord, (float4)(minVal));
 }
         // write_imageui(dest, coord, convert_uint4(in));
 
@@ -98,7 +99,8 @@ __kernel void feature_detection2 (
     // Iterate over the 7x7 region
     for (int i = -3; i <= 3; i++) {
         for (int j = -3; j <= 3; j++) {
-            float4 pixel = convert_float4(read_imagef(src, reflect_sampler, coord + (int2)(j, i)));
+            float4 pixel = convert_float4(read_imagef(src, clamp_sampler, coord + (int2)(j, i)));
+            pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
              // Convert to grayscale
 
             Gx += pixel * sobel_x[i + 3][j + 3];
@@ -114,7 +116,7 @@ __kernel void feature_detection2 (
     s.y = fabs(Gy.x *Gy.x ) ;
     s.z = fabs(Gx.x *Gy.x) ;
 
-    write_imagef(dest, coord, in);
+    write_imagef(dest, coord, s);
 }
 
 // __kernel void feature_detection (
@@ -123,11 +125,11 @@ __kernel void feature_detection2 (
 //     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 //     float4 s = (float4)(0.0f);
 
-//     float4 Gx = (float4)(0);
-//     float4 Gy = (float4)(0);
+    // }
+    //  const float4 max = read_imagef(src, clamp_sampler, pos);
 
-//     // Define the Sobel 5x5 kernel
-//     const float sobel_x[5][5] = {
+    // if (max.x < threshold) {
+    //     write_imagef(dest, pos, (float4)0.0f);
 //         { 2,  1,  0, -1, -2},
 //         { 2,  1,  0, -1, -2},
 //         { 4,  2,  0, -2, -4},
@@ -177,6 +179,11 @@ __kernel void feature_detection22 (
     float4 s = (float4)(0.0f);
     int i = 0;
     // //Half smoothing smoothing size / 2 (5/2)
+    // }
+    //  const float4 max = read_imagef(src, clamp_sampler, pos);
+
+    // if (max.x < threshold) {
+    //     write_imagef(dest, pos, (float4)0.0f);
 
     // //filterWeights is gaussianfilter
     float filterWeights[5*5] = 
@@ -201,6 +208,11 @@ __kernel void feature_detection22 (
         float4 r = (float4)(0);
         r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y))/ 7000000000;
         // printf("%f",r.x);
+    // }
+    //  const float4 max = read_imagef(src, clamp_sampler, pos);
+
+    // if (max.x < threshold) {
+    //     write_imagef(dest, pos, (float4)0.0f);
         if (r.x < 200) {
             r.x=0;
         }
@@ -211,7 +223,7 @@ __kernel void feature_detection22 (
         r.z = r.x;
 
 
-        write_imagef(dest, coord, in);
+        write_imagef(dest, coord, r);
     }
 
 __kernel void feature_detection3 (
@@ -248,13 +260,20 @@ __kernel void feature_detection3 (
                 write_imagef(dest, pos, convert_float4(org));
                 return;
             }
+            // else
+            // {
+            //     write_imagef(dest, pos, convert_float4(org));
+            //     // return;
+            // }
+
         }
+
     }
     float4 d = (255, 0, 0, 0);
     // if (max.x > 0) {
     // // printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
     // }
-    write_imagef(dest, pos, in);
+    write_imagef(dest, pos, d);
 
     // write_imagef(dest, coord, in);
     }
