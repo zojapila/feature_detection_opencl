@@ -243,6 +243,15 @@ FeatureDetection::setupCL()
                                 0,
                                 &err);
     CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
+    outputImage2D22 = cl::Image2D(context,
+                                CL_MEM_READ_WRITE,
+                                cl::ImageFormat(CL_RGBA, CL_FLOAT),
+                                width,
+                                height,
+                                0,
+                                0,
+                                &err);
+    CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
     outputImage2D2 = cl::Image2D(context,
                                 CL_MEM_READ_WRITE,
                                 cl::ImageFormat(CL_RGBA, CL_FLOAT),
@@ -252,6 +261,7 @@ FeatureDetection::setupCL()
                                 0,
                                 &err);
     CHECK_OPENCL_ERROR(err, "Image2D::Image2D() failed. (outputImage2D)");
+  
     
 
     finalOutputImage2D = cl::Image2D(context,
@@ -351,6 +361,8 @@ FeatureDetection::setupCL()
 
     kernel2 = cl::Kernel(program, "feature_detection2",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
+    kernel22 = cl::Kernel(program, "feature_detection22",  &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
     kernel3 = cl::Kernel(program, "feature_detection3",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
     kernel4 = cl::Kernel(program, "feature_detection4",  &err);
@@ -363,6 +375,9 @@ FeatureDetection::setupCL()
     CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
 
     kernelWorkGroupSize2 = kernel2.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
+                          (devices[sampleArgs->deviceId], &err);
+    CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
+    kernelWorkGroupSize22 = kernel22.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
                           (devices[sampleArgs->deviceId], &err);
     CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
     kernelWorkGroupSize3 = kernel3.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
@@ -406,6 +421,24 @@ FeatureDetection::setupCL()
             if(blockSizeX > kernelWorkGroupSize2)
             {
                 blockSizeX = kernelWorkGroupSize2;
+                blockSizeY = 1;
+            }
+        }
+           if((blockSizeX * blockSizeY) > kernelWorkGroupSize22)
+        {
+            if(!sampleArgs->quiet)
+            {
+                std::cout << "Out of Resources!" << std::endl;
+                std::cout << "Group Size specified : "
+                        << blockSizeX * blockSizeY << std::endl;
+                std::cout << "Max Group Size supported on the kernel : "
+                        << kernelWorkGroupSize22 << std::endl;
+                std::cout << "Falling back to " << kernelWorkGroupSize22 << std::endl;
+            }
+
+            if(blockSizeX > kernelWorkGroupSize22)
+            {
+                blockSizeX = kernelWorkGroupSize22;
                 blockSizeY = 1;
             }
         }
@@ -677,11 +710,35 @@ cl_int FeatureDetection::runCLKernels() {
 
     // Czekaj na zakończenie operacji kernela2
     commandQueue.finish();
+        // Set appropriate arguments to the kernel3
+    status = kernel22.setArg(0, outputImage2D1);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+
+    cl::Buffer resultBuffer22(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
+
+    status = kernel22.setArg(1, outputImage2D22);
+    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+
+    // Uruchomienie wszystkich instancji kernela3
+    status = commandQueue.enqueueNDRangeKernel(
+                kernel22,
+                cl::NullRange,
+                globalThreads,
+                localThreads,
+                NULL,
+                NULL);
+    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+
+    status = commandQueue.flush();
+    CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+
+    // Czekaj na zakończenie operacji kernela3
+    commandQueue.finish();
 
     // Set appropriate arguments to the kernel3
     status = kernel3.setArg(0, inputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
-    status = kernel3.setArg(1, outputImage2D1);
+    status = kernel3.setArg(1, outputImage2D22);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
     cl::Buffer resultBuffer3(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
