@@ -45,6 +45,8 @@ __kernel void feature_detection (
         const float4 in = convert_float4(read_imageui(src, clamp_sampler, coord));
         float4 pixel = dot(in, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
             float minVal = 1.0f; // Initial high value for min operation
+        if((coord.x == 1000) && (coord.y==1000)) {printf("1");}
+        
 
     // Iterate over the 5x5 region
     // for (int i = -2; i <= 2; i++) {
@@ -67,7 +69,7 @@ __kernel void feature_detection2 (
     __write_only image2d_t dest) {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
     float4 s = (float4)(0.0f);
-
+    if((coord.x == 1000) && (coord.y==1000)) {printf("2");}
     float4 Gx = (float4)(0);
     float4 Gy = (float4)(0);
 
@@ -167,7 +169,8 @@ __kernel void feature_detection22 (
     __write_only image2d_t dest) {
         int2 coord = (int2)(get_global_id(0), get_global_id(1));
         const float4 in = read_imagef(src, clamp_sampler, coord);
-        
+    // printf("3");
+    if((coord.x == 1000) && (coord.y==1000)) {printf("3");}
 
     //SMOOTHING
     float4 s = (float4)(0.0f);
@@ -218,6 +221,8 @@ __kernel void feature_detection3 (
     float4 minVal = (float4)(1.0f); // Initial high value for min operation
     const uint4 org = read_imageui(src_org, clamp_sampler, pos);
 
+    // printf("4");
+    if((pos.x == 1000) && (pos.y==1000)) {printf("4");}
 
     // // // Iterate over the 5x5 region
     // for (int i = -1; i <= 1; i++) {
@@ -256,7 +261,9 @@ __kernel void feature_detection3 (
 __kernel void feature_detection4 (
     __read_only image2d_t src,
     __write_only image2d_t dest) {
+        // printf("5");
         int2 coord = (int2)(get_global_id(0), get_global_id(1));
+        if((coord.x == 1000) && (coord.y==1000)) {printf("5");}
         const float4 in = read_imagef(src, clamp_sampler, coord);
         write_imageui(dest, coord, convert_uint4(in));
     }

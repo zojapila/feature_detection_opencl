@@ -361,7 +361,7 @@ FeatureDetection::setupCL()
 
     kernel2 = cl::Kernel(program, "feature_detection2",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
-    kernel22 = cl::Kernel(program, "feature_detection2",  &err);
+    kernel22 = cl::Kernel(program, "feature_detection22",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
     kernel3 = cl::Kernel(program, "feature_detection3",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
