@@ -664,7 +664,7 @@ cl_int FeatureDetection::runCLKernels() {
     // Uruchomienie wszystkich instancji kernela1
     cl::NDRange globalThreads(width, height);
     // cl::NDRange localThreads(blockSizeX, blockSizeY);
-    cl::NDRange localThreads(1, 1);
+    cl::NDRange localThreads(1024, 1);
 
     status = commandQueue.enqueueNDRangeKernel(
                 kernel,
