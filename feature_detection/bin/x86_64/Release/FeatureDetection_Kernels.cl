@@ -2,6 +2,9 @@ __constant sampler_t reflect_sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS
 __constant sampler_t clamp_sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_NEAREST;
 
 
+// gaussian / differential of gaussian / laplasjan
+// zapis do ounktów do jakiegos bufora i zrobienie na nim dylatacji zeby punkty były większe
+
 // __kernel void feature_detection (
 //     __read_only image2d_t src,
 //     __write_only image2d_t dest) {
