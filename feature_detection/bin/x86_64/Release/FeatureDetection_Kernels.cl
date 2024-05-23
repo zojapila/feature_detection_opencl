@@ -50,17 +50,38 @@ __kernel void feature_detection (
         int er_size = 10;
 
     // // Iterate over the 5x5 region
-    for (int i = -er_size; i <= er_size; i++) {
-        for (int j = -er_size; j <= er_size; j++) {
-            // uint4 pixel = read_imageui(src, clamp_sampler, coord + (int2)(j, i));
-            float4 pixel = convert_float4(read_imageui(src, clamp_sampler, coord + (int2)(i, j)));
-            pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
-            minVal = fmax(minVal, pixel.x); // Update minimum value
+    // for (int i = -er_size; i <= er_size; i++) {
+    //     for (int j = -er_size; j <= er_size; j++) {
+    //         // uint4 pixel = read_imageui(src, clamp_sampler, coord + (int2)(j, i));
+    //         float4 pixel = convert_float4(read_imageui(src, clamp_sampler, coord + (int2)(i, j)));
+    //         pixel = dot(pixel, (float4)(0.2126f, 0.7152f, 0.0722f, 0)); 
+    //         minVal = fmax(minVal, pixel.x); // Update minimum value
+    //     }
+    // }
+    // // write_imagef(dest, coord, convert_float4(pixel));
+    // // printf("%f \n", minVal);
+    // write_imagef(dest, coord, (float4)(minVal));
+    float4 s = (float4)(0);
+    int i = 0;
+    float filterWeights[5*5] = 
+							{
+								 0.0039062f, 0.0156250f, 0.0234375f, 0.0156250f, 0.0039062f,
+								 0.0156250f, 0.0625000f, 0.0937500f, 0.0625000f, 0.0156250f,
+								 0.0234375f, 0.0937500f, 0.1406250f, 0.0937500f, 0.0234375f,
+								 0.0156250f, 0.0625000f, 0.0937500f, 0.0625000f, 0.0156250f,
+								 0.0039062f, 0.0156250f, 0.0234375f, 0.0156250f, 0.0039062f
+							};
+    int half_smoothing = 2;
+    for (int y = -half_smoothing; y <= half_smoothing; ++y) {
+        for (int x = -half_smoothing; x <= half_smoothing; ++x) {
+            float4 cur_pix = read_imagef(src, reflect_sampler, coord + (int2)(x,y));
+            cur_pix = dot(cur_pix, (float4)(0.2126f, 0.7152f, 0.0722f, 0));
+
+            s += filterWeights[i] * cur_pix;
+            ++i;
         }
     }
-    // write_imagef(dest, coord, convert_float4(pixel));
-    // printf("%f \n", minVal);
-    write_imagef(dest, coord, (float4)(minVal));
+    write_imagef(dest, coord, s);
 }
         // write_imageui(dest, coord, convert_uint4(in));
 
