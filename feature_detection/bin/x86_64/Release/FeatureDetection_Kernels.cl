@@ -171,9 +171,16 @@ __kernel void feature_detection2 (
     
         float harris_k = 0.05;
         float4 r = (float4)(0);
-        r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y))/ 7000000000;
-        if (r.x < 209) {
+
+        // r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y))/ 7000000000;
+        r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y));
+        r.x = log10(fabs(r.x));
+        // printf("%f \n", r.x);
+        if (r.x < 11.5) {
             r.x=0;
+        }
+        else {
+            printf("%f \n", r.x);
         }
         r.y = r.x;
         r.z = r.x;
@@ -216,9 +223,9 @@ __kernel void feature_detection3 (
         }
     }
     float4 d = (255, 0, 0, 0);
-    if (max.x > 0) {
-    printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
-    }
+    // if (max.x > 0) {
+    // printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
+    // }
     write_imagef(dest, pos, d);
 
     // write_imagef(dest, coord, in);
