@@ -190,12 +190,12 @@ float filterWeights[21*21] = {
                 ++i1;
             }
         }
-        s = (s - s2) * 255;
+        // s = (s - s2) * 255;
         if (s.x < 0) s = (float4)(0);
         // s -= s2; 
         // printf("%f ", s.x);
         // if (s.x > 2) printf("%f ", s.x);
-        write_imagef(dest, coord, s);
+        write_imagef(dest, coord, s2);
 }
 
 
@@ -293,14 +293,31 @@ __kernel void feature_detection22 (
 
         // r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y))/ 7000000000;
         r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y));
+        float trace = s.x * s.y - s.z * s.z;
+        float det = (s.x + s.y) * (s.x + s.y);
+        float lambda1 = (trace + sqrt(trace * trace - 4 * det)) / 2;
+        float lambda2 = (trace - sqrt(trace * trace - 4 * det)) / 2;
+        if (lambda1 > 100000000000 && lambda2 > 1000)
+        {
+            // printf("(%f, %f) ",lambda1, lambda2);
+        } 
+        else {
+            r.x = 0;
+        }
+        if (r.x < 0) {
+            r.x = 0;
+        }
+            
         r.x = log10(fabs(r.x));
         // printf("%f \n", r.x);
-        if (r.x < 16) {
+        if (r.x < 10.6) {
             r.x=0;
         }
-        else {
-            // printf("%f \n", r.x);
-        }
+        
+        
+        // else {
+        //     // printf("%f \n", r.x);
+        // }
         r.y = r.x;
         r.z = r.x;
 
