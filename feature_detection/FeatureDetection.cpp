@@ -365,8 +365,8 @@ FeatureDetection::setupCL()
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
     kernel3 = cl::Kernel(program, "feature_detection3",  &err);
     CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
-    kernel4 = cl::Kernel(program, "feature_detection4",  &err);
-    CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
+    // kernel4 = cl::Kernel(program, "feature_detection4",  &err);
+    // CHECK_OPENCL_ERROR(err, "Kernel::Kernel() failed.");
 
 
     // Check group size against group size returned by kernel
@@ -383,9 +383,9 @@ FeatureDetection::setupCL()
     kernelWorkGroupSize3 = kernel3.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
                           (devices[sampleArgs->deviceId], &err);
     CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
-    kernelWorkGroupSize4 = kernel4.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
-                          (devices[sampleArgs->deviceId], &err);
-    CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
+    // kernelWorkGroupSize4 = kernel4.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>
+    //                       (devices[sampleArgs->deviceId], &err);
+    // CHECK_OPENCL_ERROR(err, "Kernel::getWorkGroupInfo()  failed.");
 
     if((blockSizeX * blockSizeY) > kernelWorkGroupSize)
     {
@@ -462,24 +462,24 @@ FeatureDetection::setupCL()
             }
         }
     
-    if((blockSizeX * blockSizeY) > kernelWorkGroupSize4)
-        {
-            if(!sampleArgs->quiet)
-            {
-                std::cout << "Out of Resources!" << std::endl;
-                std::cout << "Group Size specified : "
-                        << blockSizeX * blockSizeY << std::endl;
-                std::cout << "Max Group Size supported on the kernel : "
-                        << kernelWorkGroupSize4 << std::endl;
-                std::cout << "Falling back to " << kernelWorkGroupSize4 << std::endl;
-            }
+    // if((blockSizeX * blockSizeY) > kernelWorkGroupSize4)
+    //     {
+    //         if(!sampleArgs->quiet)
+    //         {
+    //             std::cout << "Out of Resources!" << std::endl;
+    //             std::cout << "Group Size specified : "
+    //                     << blockSizeX * blockSizeY << std::endl;
+    //             std::cout << "Max Group Size supported on the kernel : "
+    //                     << kernelWorkGroupSize4 << std::endl;
+    //             std::cout << "Falling back to " << kernelWorkGroupSize4 << std::endl;
+    //         }
 
-            if(blockSizeX > kernelWorkGroupSize4)
-            {
-                blockSizeX = kernelWorkGroupSize4;
-                blockSizeY = 1;
-            }
-        }
+    //         if(blockSizeX > kernelWorkGroupSize4)
+    //         {
+    //             blockSizeX = kernelWorkGroupSize4;
+    //             blockSizeY = 1;
+    //         }
+    //     }
     
 
     return SDK_SUCCESS;
@@ -743,7 +743,7 @@ cl_int FeatureDetection::runCLKernels() {
 
     cl::Buffer resultBuffer3(context, CL_MEM_READ_WRITE, sizeof(float) * width * height);
 
-    status = kernel3.setArg(2, outputImage2D2);
+    status = kernel3.setArg(2, finalOutputImage2D);
     CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
     // Uruchomienie wszystkich instancji kernela3
@@ -762,28 +762,28 @@ cl_int FeatureDetection::runCLKernels() {
     // Czekaj na zakończenie operacji kernela3
     commandQueue.finish();
 
-    // Set appropriate arguments to the kernel4
-    status = kernel4.setArg(0, outputImage2D2);
-    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
+    // // Set appropriate arguments to the kernel4
+    // status = kernel4.setArg(0, outputImage2D2);
+    // CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (inputImageBuffer)");
 
-    status = kernel4.setArg(1, finalOutputImage2D);
-    CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
+    // status = kernel4.setArg(1, finalOutputImage2D);
+    // CHECK_OPENCL_ERROR(status, "Kernel::setArg() failed. (outputImageBuffer)");
 
-    // Uruchomienie wszystkich instancji kernela4
-    status = commandQueue.enqueueNDRangeKernel(
-                kernel4,
-                cl::NullRange,
-                globalThreads,
-                localThreads,
-                NULL,
-                NULL);
-    CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
+    // // Uruchomienie wszystkich instancji kernela4
+    // status = commandQueue.enqueueNDRangeKernel(
+    //             kernel4,
+    //             cl::NullRange,
+    //             globalThreads,
+    //             localThreads,
+    //             NULL,
+    //             NULL);
+    // CHECK_OPENCL_ERROR(status, "CommandQueue::enqueueNDRangeKernel() failed.");
 
-    status = commandQueue.flush();
-    CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
+    // status = commandQueue.flush();
+    // CHECK_OPENCL_ERROR(status, "cl::CommandQueue.flush failed.");
 
-    // Czekaj na zakończenie operacji kernela4
-    commandQueue.finish();
+    // // Czekaj na zakończenie operacji kernela4
+    // commandQueue.finish();
 
     // Enqueue Read Image
     cl::Event readEvt;

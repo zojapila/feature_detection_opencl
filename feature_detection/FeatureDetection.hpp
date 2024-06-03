@@ -64,7 +64,7 @@ class FeatureDetection
         cl::Kernel kernel2;  
         cl::Kernel kernel22;      
         cl::Kernel kernel3;                          
-        cl::Kernel kernel4;  
+        // cl::Kernel kernel4;  
         cl_uchar* verificationOutput;       /**< Output array for reference implementation */
 
         SDKBitMap inputBitmap;   /**< Bitmap class object */
@@ -77,7 +77,7 @@ class FeatureDetection
         size_t kernelWorkGroupSize2;         /**< Group Size returned by kernel */
         size_t kernelWorkGroupSize22;  
         size_t kernelWorkGroupSize3; 
-        size_t kernelWorkGroupSize4; 
+        // size_t kernelWorkGroupSize4; 
         size_t blockSizeX;                  /**< Work-group size in x-direction */
         size_t blockSizeY;                  /**< Work-group size in y-direction */
         int iterations;                     /**< Number of iterations for kernel execution */
