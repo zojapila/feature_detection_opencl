@@ -25,24 +25,24 @@ __kernel void feature_detection(
         //                          0.0156250f, 0.0625000f, 0.0937500f, 0.0625000f, 0.0156250f,
         //                          0.0039062f, 0.0156250f, 0.0234375f, 0.0156250f, 0.0039062f
         //                     };
-        float filterWeights2[9] = {
-                                    0.0751136079541115, 0.12384140315297394, 0.0751136079541115, 
-                                    0.12384140315297394, 0.20417995557165805, 0.12384140315297394, 
-                                    0.0751136079541115, 0.12384140315297394, 0.0751136079541115, 
-                                };
+        // float filterWeights2[9] = {
+        //                             0.0751136079541115, 0.12384140315297394, 0.0751136079541115, 
+        //                             0.12384140315297394, 0.20417995557165805, 0.12384140315297394, 
+        //                             0.0751136079541115, 0.12384140315297394, 0.0751136079541115, 
+        //                         };
 
-// float filterWeights2[9*9] = 
-// {
-//     1.234098e-04, 3.726653e-04, 9.118820e-04, 1.831564e-03, 2.865047e-03, 3.726653e-04, 9.118820e-04, 3.726653e-04, 1.234098e-04,
-//     3.726653e-04, 1.125351e-03, 2.753644e-03, 5.530844e-03, 8.636116e-03, 1.125351e-03, 2.753644e-03, 1.125351e-03, 3.726653e-04,
-//     9.118820e-04, 2.753644e-03, 6.737947e-03, 1.353353e-02, 2.113575e-02, 2.753644e-03, 6.737947e-03, 2.753644e-03, 9.118820e-04,
-//     1.831564e-03, 5.530844e-03, 1.353353e-02, 2.718281e-02, 4.247802e-02, 5.530844e-03, 1.353353e-02, 5.530844e-03, 1.831564e-03,
-//     2.865047e-03, 8.636116e-03, 2.113575e-02, 4.247802e-02, 6.635020e-02, 8.636116e-03, 2.113575e-02, 8.636116e-03, 2.865047e-03,
-//     1.831564e-03, 5.530844e-03, 1.353353e-02, 2.718281e-02, 4.247802e-02, 5.530844e-03, 1.353353e-02, 5.530844e-03, 1.831564e-03,
-//     9.118820e-04, 2.753644e-03, 6.737947e-03, 1.353353e-02, 2.113575e-02, 2.753644e-03, 6.737947e-03, 2.753644e-03, 9.118820e-04,
-//     3.726653e-04, 1.125351e-03, 2.753644e-03, 5.530844e-03, 8.636116e-03, 1.125351e-03, 2.753644e-03, 1.125351e-03, 3.726653e-04,
-//     1.234098e-04, 3.726653e-04, 9.118820e-04, 1.831564e-03, 2.865047e-03, 3.726653e-04, 9.118820e-04, 3.726653e-04, 1.234098e-04
-// };
+float filterWeights2[9*9] = 
+{
+    1.234098e-04, 3.726653e-04, 9.118820e-04, 1.831564e-03, 2.865047e-03, 3.726653e-04, 9.118820e-04, 3.726653e-04, 1.234098e-04,
+    3.726653e-04, 1.125351e-03, 2.753644e-03, 5.530844e-03, 8.636116e-03, 1.125351e-03, 2.753644e-03, 1.125351e-03, 3.726653e-04,
+    9.118820e-04, 2.753644e-03, 6.737947e-03, 1.353353e-02, 2.113575e-02, 2.753644e-03, 6.737947e-03, 2.753644e-03, 9.118820e-04,
+    1.831564e-03, 5.530844e-03, 1.353353e-02, 2.718281e-02, 4.247802e-02, 5.530844e-03, 1.353353e-02, 5.530844e-03, 1.831564e-03,
+    2.865047e-03, 8.636116e-03, 2.113575e-02, 4.247802e-02, 6.635020e-02, 8.636116e-03, 2.113575e-02, 8.636116e-03, 2.865047e-03,
+    1.831564e-03, 5.530844e-03, 1.353353e-02, 2.718281e-02, 4.247802e-02, 5.530844e-03, 1.353353e-02, 5.530844e-03, 1.831564e-03,
+    9.118820e-04, 2.753644e-03, 6.737947e-03, 1.353353e-02, 2.113575e-02, 2.753644e-03, 6.737947e-03, 2.753644e-03, 9.118820e-04,
+    3.726653e-04, 1.125351e-03, 2.753644e-03, 5.530844e-03, 8.636116e-03, 1.125351e-03, 2.753644e-03, 1.125351e-03, 3.726653e-04,
+    1.234098e-04, 3.726653e-04, 9.118820e-04, 1.831564e-03, 2.865047e-03, 3.726653e-04, 9.118820e-04, 3.726653e-04, 1.234098e-04
+};
 
 // float filterWeights[11*11] = 
 // {
@@ -180,7 +180,7 @@ float filterWeights[21*21] = {
         }
         float4 s2 = (float4)(0);
         int i1 = 0;
-        int half_smoothing2 = 1;
+        int half_smoothing2 = 4;
         for (int y = -half_smoothing2; y <= half_smoothing2; ++y) {
             for (int x = -half_smoothing2; x <= half_smoothing2; ++x) {
                 float4 cur_pix = convert_float4(read_imageui(src, clamp_sampler, coord + (int2)(x, y)));
@@ -190,12 +190,12 @@ float filterWeights[21*21] = {
                 ++i1;
             }
         }
-        s = (s - s2) * 255;
+        // s = (s - s2) * 255;
         if (s.x < 0) s = (float4)(0);
         // s -= s2; 
         // printf("%f ", s.x);
         // if (s.x > 2) printf("%f ", s.x);
-        write_imagef(dest, coord, s);
+        write_imagef(dest, coord, s2);
 }
 
 
@@ -293,14 +293,32 @@ __kernel void feature_detection22 (
 
         // r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y))/ 7000000000;
         r.x = ((s.x * s.y - s.z * s.z) - harris_k * (s.x + s.y) * (s.x + s.y));
+        float trace = s.x * s.y - s.z * s.z;
+        float det = (s.x + s.y) * (s.x + s.y);
+        float lambda1 = (trace + sqrt(trace * trace - 4 * det)) / 2;
+        float lambda2 = (trace - sqrt(trace * trace - 4 * det)) / 2;
+        // if (lambda1 > 1000000000 && lambda2 > 10)
+        // {
+        //     // printf("(%f, %f) ",lambda1, lambda2);
+        // } 
+        // else {
+        //     r.x = 0;
+        // }
+        if (r.x < 0) {
+            r.x = 0;
+        }
+            
         r.x = log10(fabs(r.x));
         // printf("%f \n", r.x);
-        if (r.x < 16) {
+        if ((r.x < 10.7) || (r.x>10.88)) {
+        // if (r.x < 10.7) {
             r.x=0;
         }
-        else {
-            // printf("%f \n", r.x);
-        }
+        
+        
+        // else {
+        //     // printf("%f \n", r.x);
+        // }
         r.y = r.x;
         r.z = r.x;
 
@@ -333,14 +351,23 @@ __kernel void feature_detection3 (
     //     write_imagef(dest, pos, (float4)0.0f);
     //     return;
     // }
-    int half_supr = 30;
+    int half_supr = 50;
+
 
     for (int y = -half_supr; y <= half_supr; y++) {
         for (int x = -half_supr; x <= half_supr; ++x) {
-            const float4 r = read_imagef(src, reflect_sampler, pos + (int2)(x,y));
-            if (r.x > max.x) {
+            const float4 surr = read_imagef(src, clamp_sampler, pos + (int2)(x,y));
+            if (surr.x > max.x) {
                 write_imagef(dest, pos, convert_float4(org));
                 return;
+                }
+                
+            else if (surr.x == max.x) { 
+                if (x<0 && y<0) {
+                    write_imagef(dest, pos, convert_float4(org));
+                    return;
+                }
+
             }
             // else
             // {
@@ -351,11 +378,27 @@ __kernel void feature_detection3 (
         }
 
     }
-    float4 d = (255, 0, 0, 0);
+    float4 d = (0, 0, 0, 0);
+
+    if (max.x != 0) {
+        d.x = 255;
+        printf("[%d, %d] !%f! \n", pos.x, pos.y, max.x );
+        for (int y = -10; y <= 10; y++) {
+        for (int x = -10; x <= 10; ++x) {
+            write_imagef(dest, pos + (int2)(x,y), d);
+        }
+        // printf(("(%d, %d) "), pos[0], pos[1]);
+    }
+    }
+    // else {
+    //     write_imagef(dest, pos, convert_float4(org));
+    // }
+    
+    // printf("(%d, %d)\n", pos.x, pos.y);
     // if (max.x > 0) {
     // printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
     // }
-    write_imagef(dest, pos, d);
+    
 
     // write_imagef(dest, coord, in);
     }
@@ -366,7 +409,13 @@ __kernel void feature_detection4 (
     __write_only image2d_t dest) {
         // printf("5");
         int2 coord = (int2)(get_global_id(0), get_global_id(1));
-        if((coord.x == 1000) && (coord.y==1000)) {printf("5");}
+        // if((coord.x == 1000) && (coord.y==1000)) {printf("5");}
         const float4 in = read_imagef(src, clamp_sampler, coord);
+        // float4 in100 = read_imagef(src, clamp_sampler, coord+(int2)(20,20));
+        // // if (in.x ==255) printf("%f", in.x);
+        
+        // if (in.x == 255.0f && in.y == 0 && in.z == 0 && in100.x == 255.0f) {
+        //     printf("(%d, %d) ", coord.x+10, coord.y+10);
+        // }
         write_imageui(dest, coord, convert_uint4(in));
     }

@@ -310,7 +310,8 @@ __kernel void feature_detection22 (
             
         r.x = log10(fabs(r.x));
         // printf("%f \n", r.x);
-        if (r.x < 10.7) {
+        if ((r.x < 10.7) || (r.x>10.88)) {
+        // if (r.x < 10.7) {
             r.x=0;
         }
         
@@ -355,10 +356,18 @@ __kernel void feature_detection3 (
 
     for (int y = -half_supr; y <= half_supr; y++) {
         for (int x = -half_supr; x <= half_supr; ++x) {
-            const float4 r = read_imagef(src, reflect_sampler, pos + (int2)(x,y));
-            if (r.x > max.x) {
+            const float4 surr = read_imagef(src, clamp_sampler, pos + (int2)(x,y));
+            if (surr.x > max.x) {
                 write_imagef(dest, pos, convert_float4(org));
                 return;
+                }
+                
+            else if (surr.x == max.x) { 
+                if (x<0 && y<0) {
+                    write_imagef(dest, pos, convert_float4(org));
+                    return;
+                }
+
             }
             // else
             // {
@@ -370,15 +379,26 @@ __kernel void feature_detection3 (
 
     }
     float4 d = (0, 0, 0, 0);
+
     if (max.x != 0) {
         d.x = 255;
+        printf("[%d, %d] !%f! \n", pos.x, pos.y, max.x );
+        for (int y = -10; y <= 10; y++) {
+        for (int x = -10; x <= 10; ++x) {
+            write_imagef(dest, pos + (int2)(x,y), d);
+        }
+        // printf(("(%d, %d) "), pos[0], pos[1]);
     }
+    }
+    // else {
+    //     write_imagef(dest, pos, convert_float4(org));
+    // }
     
     // printf("(%d, %d)\n", pos.x, pos.y);
     // if (max.x > 0) {
     // printf("ID: ( {%d, %d, %f)", pos.x, pos.y, max.x);
     // }
-    write_imagef(dest, pos, d);
+    
 
     // write_imagef(dest, coord, in);
     }
@@ -389,7 +409,13 @@ __kernel void feature_detection4 (
     __write_only image2d_t dest) {
         // printf("5");
         int2 coord = (int2)(get_global_id(0), get_global_id(1));
-        if((coord.x == 1000) && (coord.y==1000)) {printf("5");}
+        // if((coord.x == 1000) && (coord.y==1000)) {printf("5");}
         const float4 in = read_imagef(src, clamp_sampler, coord);
+        // float4 in100 = read_imagef(src, clamp_sampler, coord+(int2)(20,20));
+        // // if (in.x ==255) printf("%f", in.x);
+        
+        // if (in.x == 255.0f && in.y == 0 && in.z == 0 && in100.x == 255.0f) {
+        //     printf("(%d, %d) ", coord.x+10, coord.y+10);
+        // }
         write_imageui(dest, coord, convert_uint4(in));
     }
