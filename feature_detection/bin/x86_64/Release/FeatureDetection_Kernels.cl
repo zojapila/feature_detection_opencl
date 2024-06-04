@@ -196,7 +196,8 @@ __kernel void feature_detection22 (
             
         r.x = log10(fabs(r.x));
         // printf("%f \n", r.x);
-        if ((r.x < 10.7) || (r.x>10.88)) {
+        if ((r.x < 10.65) || (r.x>10.8)) {
+        // if ((r.x < 10) || (r.x>10.24)) {
         // if (r.x < 10.7) {
             r.x=0;
         }
@@ -207,48 +208,105 @@ __kernel void feature_detection22 (
         write_imagef(dest, coord, r);
     }
 
+// __kernel void feature_detection3 (
+//     __read_only image2d_t src_org,
+//     __read_only image2d_t src,
+//     __write_only image2d_t dest) {
+//         int2 pos = (int2)(get_global_id(0), get_global_id(1));
+//     float4 minVal = (float4)(1.0f); // Initial high value for min operation
+//     const uint4 org = read_imageui(src_org, clamp_sampler, pos);
+//     const float4 in = convert_float4(read_imageui(src, clamp_sampler, pos));
+
+//     // if((pos.x == 1000) && (pos.y==1000)) {printf("4");}
+//     const float4 max = read_imagef(src, clamp_sampler, pos);
+//     int half_supr = 100;
+
+
+//     for (int y = -half_supr; y <= half_supr; y++) {
+//         for (int x = -half_supr; x <= half_supr; ++x) {
+//             const float4 surr = read_imagef(src, clamp_sampler, pos + (int2)(x,y));
+//             if (surr.x > max.x) {
+//                 write_imageui(dest, pos, convert_uint4(org));
+//                 // write_imagef(dest, pos, convert_float4(org));
+//                 return;
+//                 }
+                
+//             else if (surr.x == max.x) { 
+//                 if (x<0 && y<0) {
+//                     write_imageui(dest, pos, convert_uint4(org));
+//                     // write_imagef(dest, pos, convert_float4(org));
+//                     return;
+//                 }
+//             }
+//         }
+//     }
+//     float4 d = (0, 0, 0, 0);
+
+//     if (max.x != 0) {
+//         d.x = 255;
+//         printf("[%d, %d] !%f! \n", pos.x, pos.y, max.x );
+//         for (int y = -10; y <= 10; y++) {
+//         for (int x = -10; x <= 10; ++x) {
+//             write_imageui(dest, pos + (int2)(x,y), convert_uint4(d));
+//         }
+//     }
+//     }
+//     }
 __kernel void feature_detection3 (
     __read_only image2d_t src_org,
     __read_only image2d_t src,
     __write_only image2d_t dest) {
-        int2 pos = (int2)(get_global_id(0), get_global_id(1));
+        
+    int2 pos = (int2)(get_global_id(0), get_global_id(1));
     float4 minVal = (float4)(1.0f); // Initial high value for min operation
     const uint4 org = read_imageui(src_org, clamp_sampler, pos);
     const float4 in = convert_float4(read_imageui(src, clamp_sampler, pos));
-
-    if((pos.x == 1000) && (pos.y==1000)) {printf("4");}
     const float4 max = read_imagef(src, clamp_sampler, pos);
-    int half_supr = 50;
-
+    int half_supr = 100;
 
     for (int y = -half_supr; y <= half_supr; y++) {
         for (int x = -half_supr; x <= half_supr; ++x) {
-            const float4 surr = read_imagef(src, clamp_sampler, pos + (int2)(x,y));
+            int2 offset_pos = pos + (int2)(x, y);
+
+            // Ensure we are within bounds
+            if (offset_pos.x < 0 || offset_pos.y < 0 ||
+                offset_pos.x >= get_image_width(src) ||
+                offset_pos.y >= get_image_height(src)) {
+                continue;
+            }
+
+            const float4 surr = read_imagef(src, clamp_sampler, offset_pos);
             if (surr.x > max.x) {
-                write_imageui(dest, pos, convert_uint4(org));
-                // write_imagef(dest, pos, convert_float4(org));
+                write_imageui(dest, pos, org);
                 return;
-                }
-                
-            else if (surr.x == max.x) { 
-                if (x<0 && y<0) {
-                    write_imageui(dest, pos, convert_uint4(org));
-                    // write_imagef(dest, pos, convert_float4(org));
+            } else if (surr.x == max.x) {
+                if (x < 0 && y < 0) {
+                    write_imageui(dest, pos, org);
                     return;
                 }
             }
         }
     }
-    float4 d = (0, 0, 0, 0);
+
+    float4 d = (float4)(0.0f, 0.0f, 0.0f, 0.0f); // Proper initialization
 
     if (max.x != 0) {
-        d.x = 255;
-        printf("[%d, %d] !%f! \n", pos.x, pos.y, max.x );
+        d.x = 255.0f;
+        printf("[%d, %d] !%f! \n", pos.x, pos.y, max.x);
         for (int y = -10; y <= 10; y++) {
-        for (int x = -10; x <= 10; ++x) {
-            write_imageui(dest, pos + (int2)(x,y), convert_uint4(d));
+            for (int x = -10; x <= 10; ++x) {
+                int2 draw_pos = pos + (int2)(x, y);
+
+                // Ensure we are within bounds
+                if (draw_pos.x < 0 || draw_pos.y < 0 ||
+                    draw_pos.x >= get_image_width(src) ||
+                    draw_pos.y >= get_image_height(src)) {
+                    continue;
+                }
+
+                write_imageui(dest, draw_pos, convert_uint4(d));
+            }
         }
     }
-    }
-    }
+}
 
